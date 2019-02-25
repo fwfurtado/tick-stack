@@ -1,0 +1,50 @@
+version: "3.2"
+
+services: 
+  telegraf:
+    image: telegraf
+    volumes:
+    - type: bind
+      source: ./telegraf.conf
+      target: /etc/telegraf/telegraf.conf
+      read_only: true
+    ports:
+    - "8092:8092/udp"
+    - "8094:8094"
+    - "8125:8125/udp"
+
+  influxdb: 
+    image: influxdb
+    volumes: 
+    - type: volume
+      source: influxdb
+      target: /var/lib/influxdb
+      volume: 
+        no_copy: true
+    - type: bind
+      source: ./influxdb.conf
+      target: /etc/influxdb/influxdb.conf
+      read_only: true
+    ports:
+    - "8086:8086"
+    - "8089:8089"
+
+  chronograf: 
+    image: quay.io/influxdb/chronograf:1.7.7
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+      KAPACITOR_URL: http://kapacitor:9092
+    ports:
+    - "8888:8888"
+
+  kapacitor:
+    image: kapacitor
+    environment:
+      KAPACITOR_HOSTNAME: kapacitor
+      KAPACITOR_INFLUXDB_0_URLS_0: http://influxdb:8086
+    ports:
+    - "9092:9092"
+
+volumes:
+  influxdb:
+    external: true
